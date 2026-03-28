@@ -1,40 +1,135 @@
-# WikiArt DCGAN (PyTorch) + FID/IS (Ignite)
+# WikiArt DCGAN (PyTorch)
 
-## 0) Dataset
-Place extracted dataset under:
-- data/raw/wikiart
+This project trains a DCGAN to generate 64×64 artwork images from the WikiArt dataset.
 
-Images can be in nested folders; code scans recursively for jpg/jpeg/png/webp.
+---
 
-## 1) Environment
-Activate your conda env and install deps:
-- pip install -U pytorch-ignite matplotlib numpy pillow tqdm tensorboard scipy
-Install torch/torchvision separately if needed.
+## Overview
 
-## 2) Make a small sample list (fast test)
-Creates data/sample/index_2000.txt with 2000 image paths (relative to data/raw/wikiart):
-- python scripts/make_subset_index.py --data-root data/raw/wikiart --out data/sample/index_2000.txt --n 2000 --seed 0
+* DCGAN (Generator + Discriminator)
+* Mixed precision training (AMP)
+* Checkpointing, logging, and sample generation
+* FID and Inception Score evaluation
+* Dataset caching for faster training
 
-## 3) Train on the small sample (sanity check)
-- python -m src.train.train_dcgan --data-root data/raw/wikiart --subset-file data/sample/index_2000.txt --run-name sample_2000 --epochs 3
+---
 
-Outputs:
-- outputs/samples/<run-name>/epoch_*.png  (generated grids)
-- outputs/checkpoints/<run-name>/*.pt      (weights)
-- outputs/metrics/<run-name>/losses.csv    (loss curves)
-- runs/<run-name>/                         (tensorboard)
+## Dataset
 
-TensorBoard:
-- tensorboard --logdir runs
+Dataset: https://www.kaggle.com/datasets/steubk/wikiart
 
-## 4) Train on full dataset
-- python -m src.train.train_dcgan --data-root data/raw/wikiart --run-name full --epochs 25
+### Setup
 
-## 5) Evaluate FID + Inception Score (Ignite)
-This evaluates generated samples vs real images from the dataset.
+1. Download the dataset
+2. Place it at:
 
-Example (generates 10k fake images internally in batches):
-- python -m src.eval.eval_gan_metrics --data-root data/raw/wikiart --ckpt outputs/checkpoints/full/generator_last.pt --run-name full_eval --num-fakes 10000 --batch-size 64
+```
+data/wikiart/
+```
 
-Results saved:
-- outputs/metrics/<run-name>/fid_is.json
+The `data/` directory is not tracked by Git.
+
+---
+
+## Preprocess (recommended)
+
+Cache and resize images to 64×64:
+
+```
+python scripts/cache_wikiart_64.py \
+    --data-root data/wikiart \
+    --out-root data/cache/wikiart_64 \
+    --image-size 64
+```
+
+This creates a processed dataset and index file for faster loading 
+
+---
+
+## Training
+
+```
+python scripts/train_dcgan.py \
+    --data-root data/cache/wikiart_64 \
+    --run-name experiment_1 \
+    --epochs 100 \
+    --batch-size 256 \
+    --lr 0.00015
+```
+
+Training:
+
+* uses BCE loss with label smoothing 
+* logs metrics to CSV
+* saves checkpoints and sample images
+
+---
+
+## Outputs
+
+```
+outputs/<run-name>/
+```
+
+Structure:
+
+```
+checkpoints/
+samples/
+metrics/
+hparams.json
+```
+
+Hyperparameters are saved automatically 
+
+---
+
+## Sampling
+
+Generate a grid:
+
+```
+python scripts/sample_4x4.py
+```
+
+Or export images:
+
+```
+python scripts/sample_export.py \
+    --ckpt outputs/<run-name>/checkpoints/generator_last.pt \
+    --out-dir outputs/<run-name>/generated \
+    --n 64 \
+    --save-grid \
+    --save-individual
+```
+
+---
+
+## Evaluation
+
+Compute FID and Inception Score:
+
+```
+python scripts/eval_gan_metrics.py \
+    --real-root data/cache/wikiart_64 \
+    --ckpt outputs/<run-name>/checkpoints/generator_last.pt
+```
+
+---
+
+## Model
+
+DCGAN architecture:
+
+* Generator: transposed convolutions + batch norm + ReLU
+* Discriminator: convolutions + batch norm + LeakyReLU 
+
+---
+
+## Notes
+
+* Do not commit `data/`, `outputs/`, or checkpoints
+* Use GPU for training
+* Dataset caching significantly improves performance
+
+---
