@@ -1,0 +1,75 @@
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# PYTHON
+# =========================
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+build/
+dist/
+
+# =========================
+# VIRTUAL ENV
+# =========================
+venv/
+env/
+.venv/
+
+# =========================
+# VSCODE
+# =========================
+.vscode/*
+
+# (optional) keep settings if you want shared config
+# !.vscode/settings.json
+
+# =========================
+# DATA (WikiArt dataset)
+# =========================
+data/*
+
+# keep folder structure
+!data/.gitkeep
+
+# =========================
+# OUTPUTS (generated images)
+# =========================
+outputs/*
+!outputs/.gitkeep
+
+# =========================
+# TRAINING RUNS (VERY IMPORTANT)
+# =========================
+runs/*
+
+# =========================
+# MODEL FILES
+# =========================
+*.pt
+*.pth
+
+# =========================
+# LOGS / TRACKING
+# =========================
+*.log
+logs/
+events.out.tfevents.*
+
+# =========================
+# JUPYTER
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# MISC
+# =========================
+*.tmp
+*.swp
+*.bak
+.env
